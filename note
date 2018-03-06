@@ -1,0 +1,52 @@
+*设置波特率
+tcgetattr (fd, &term_params); // 获取UART1 当前配置
+tcflush (fd, TCIOFLUSH); // 清空UART1 缓冲区
+cfsetispeed (&term_params, B115200); // 设置输入波特率
+cfsetospeed (&term_params, B115200); // 设置输出波特率
+tcsetattr (fd, TCSANOW, &term_params); // 更新UART1 串口配置
+
+
+*设置非标准的波特率
+struct serial_struct ss;
+struct termios options;
+/*设置波特率为38400*/
+tcgetattr (fd, &options);
+cfsetispeed (&options, B38400);
+cfsetospeed (&options, B38400);
+tcflush (fd, TCIFLUSH); // 清空串口缓冲区
+tcsetattr (fd, TCSANOW, &options);
+/* 设置标志位，传入要设置的非标准波特率 */
+ss.flags = ASYNC_SPD_CUST;
+ss.custom_divisor = speed; // speed 为要设置的波特率，如1152000、1125000 等
+ioctl (fd, TIOCSSERIAL, &ss);
+
+
+*设置物理串口数据长度、停止位、奇偶校验位
+tcgetattr (fd, &attrib); // 获取UART1 当前配置
+/* 设置7 位数据位 */
+attrib.c_cflag |= CS7;
+/* 设置8 位数据位 */
+attrib.c_cflag |= CS8;
+/* 无校验 */
+attrib.c_cflag &= ~PARENB; // 不使能校验
+attrib.c_iflag &= ~INPCK; // 不使能输入校验
+/* 奇校验 */
+attrib.c_cflag |= (PARODD | PARENB); // 使能校验且为奇校验
+attrib.c_iflag |= INPCK; // 使能输入校验
+/* 偶校验 */
+attrib.c_cflag |= PARENB; // 使能校验
+attrib.c_cflag &= ~PARODD; // 设置为偶校验
+attrib.c_iflag |= INPCK; // 使能输入校验
+/* 设置2 位停止位 */
+attrib.c_cflag |= CSTOPB
+/* 设置1 位停止位 */
+attrib.c_cflag &= ~CSTOPB;
+struct termios 结构体记录了串口的属性配置，上述操作完毕后需要写入到指定的串口中，
+配置才能生效，和设置波特率一样，操作如下：
+tcsetattr(fd,TCSANOW,&attrib);
+
+
+*设置硬件流控
+tcgetattr (fd, &attrib); // 获取串口当前配置
+attrib.c_cflag |= CRTSCTS; //使能硬件流控
+attrib.c_cflag &= ~CRTSCTS; //不使能硬件流控
